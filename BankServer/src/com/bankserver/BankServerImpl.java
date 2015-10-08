@@ -1,10 +1,16 @@
 package com.bankserver;
 
 import com.bankinterface.Constant;
+import com.bankinterface.CreditLimitState;
 import com.bankinterface.CustomerInterface;
 import com.bankinterface.ManagerInterface;
 import com.bankserver.model.CustomerAccount;
 import com.bankserver.model.Loan;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
@@ -16,15 +22,20 @@ import java.util.Iterator;
  *
  * @author yucunli
  */
-public class BankServerImpl extends UnicastRemoteObject implements CustomerInterface, ManagerInterface{
+public class BankServerImpl extends UnicastRemoteObject implements CustomerInterface, ManagerInterface, Runnable{
 
     HashMap<String, ArrayList<CustomerAccount>> customerAccount_HashMap;
+    HashMap<String, CustomerAccount> customerAccount_HashMap_Internal;
     HashMap<String, Loan> loan_HashMap;
     
+    private int bank_server_rmi_port;
+    private String bank_server_rmi_id;
     
-    
-    public BankServerImpl() throws RemoteException{
+    public BankServerImpl(String bank_server_rmi_id, int bank_server_rmi_port) throws RemoteException{
         super();
+        
+        this.bank_server_rmi_id = bank_server_rmi_id;
+        this.bank_server_rmi_port = bank_server_rmi_port;
         
         customerAccount_HashMap = new HashMap<String, ArrayList<CustomerAccount>>();
         loan_HashMap = new HashMap<String, Loan>();
@@ -58,6 +69,8 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
             CustomerAccount account = new CustomerAccount(firstName, lastName, emailAddress, password);
             list.add(account);
             
+            customerAccount_HashMap_Internal.put(account.getCustomerAccountNumber(), account);
+            
             return account.getCustomerAccountNumber();
         }else{
             return "Your email "+ emailAddress + " has been used by another account";
@@ -66,7 +79,7 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
     }
 
     @Override
-    public boolean getLoan(String bank, String accountNumber, String password, int loanAmount) throws RemoteException {
+    public String getLoan(String bank, String accountNumber, String password, int loanAmount) throws RemoteException {
         // server side do not need know bank name
         
         /**
@@ -76,9 +89,77 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
          * outstanding loans in the other banks using UDP/IP messages.
          */ 
         
+        String result = bank_server_rmi_id + ": getLoan() has been called";
+        
+        // check if account is existed
+        boolean foundAccount = customerAccount_HashMap_Internal.get(accountNumber) == null ? false : true;
+        
+        if(foundAccount){
+            CustomerAccount account = customerAccount_HashMap_Internal.get(accountNumber);
+            if(account.getPassword().equals(password)){
+                
+                ArrayList<Integer> other_bank_servers = new ArrayList<Integer>();
+                if(bank_server_rmi_id != Constant.BANK_BMO_RMI_ID){
+                    other_bank_servers.add(Constant.BANK_BMO_RMI_PORT);
+                }
+                
+                if(bank_server_rmi_id != Constant.BANK_SCOTIA_RMI_ID){
+                    other_bank_servers.add(Constant.BANK_SCOTIA_RMI_PORT);
+                }
+                
+                if(bank_server_rmi_id != Constant.BANK_TD_RMI_ID){
+                    other_bank_servers.add(Constant.BANK_TD_RMI_PORT);
+                }
+                
+                boolean isExceedLimit = false;
+                
+                for(Integer port : other_bank_servers){
+                    try{
+                        DatagramSocket clientSocket = new DatagramSocket();
+                        InetAddress IPAddress = InetAddress.getByName("localhost");
+                        byte[] sendData = new byte[1024];
+                        byte[] receiveData = new byte[1024];
+                        
+                        sendData = (account.getLastName() + Constant.SEPERATOR + account.getEmailAddress()).getBytes();
+                        
+                        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+                        clientSocket.send(sendPacket);
+                        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                        clientSocket.receive(receivePacket);
+                        String reply = new String(receivePacket.getData());
+                        clientSocket.close();
+                        
+                        if(reply.equals(CreditLimitState.EXCEED_LIMIT.toString())){
+                            isExceedLimit = true;
+                            break;
+                        }
+                        
+                    }catch(Exception e){
+                        System.out.println("**********************");
+                        System.out.println(bank_server_rmi_id + "getLoan");
+                        System.out.println("**********************");
+                        System.out.println(e.toString());
+                    }
+                }
+                
+                if(!isExceedLimit){
+                    result = bank_server_rmi_id + ": " + account.getFirstName() + " "
+                            + account.getLastName() + "We have successfully dealt with your loan!!! Amazing job!!!";
+                }else{
+                    result = bank_server_rmi_id + ": " + account.getFirstName() + " "
+                            + account.getLastName() + " Sorry, your credit limit is exceeded bank limit"
+                            + ", please contact with manager Mr.Yucun";
+                }
+                
+            }else{
+                result = bank_server_rmi_id + ": Your password is wrong, please check another one";
+            }
+        }else{
+            result = bank_server_rmi_id + ": Can not find your account in our bank";
+        }
         
         
-        return true;
+        return result;
     }
 
     @Override
@@ -133,5 +214,47 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
         }
         
         return result.toString();
+    }
+    
+    /** Start background thread to track bank operations. */
+    public void start() {
+            new Thread(this).start();
+    }
+
+    @Override
+    public void run() {
+        
+        try{
+            
+            DatagramSocket serverSocket = new DatagramSocket(bank_server_rmi_port);
+        
+            byte[] receiveData = new byte[1024];
+            byte[] sendData = new byte[1024];
+
+            while(true){
+                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                serverSocket.receive(receivePacket);
+                String sentence = new String(receivePacket.getData());
+                InetAddress IPAddress = receivePacket.getAddress();
+                int port = receivePacket.getPort();
+                
+                String[] account_info = sentence.split(Constant.SEPERATOR);
+                ArrayList<CustomerAccount> list = customerAccount_HashMap.get(account_info[0].toLowerCase().substring(0, 1));
+                for(CustomerAccount account : list){
+                    if(account.getEmailAddress().equals(account_info[1])){
+                        // how to design due/creditlimit problem
+                    }
+                }
+                
+                sendData = "result to be sent".getBytes();
+                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+                serverSocket.send(sendPacket);
+            }
+            
+        }catch(Exception e){
+            System.out.println("Server "+bank_server_rmi_port+" has problem!!!!");
+            System.out.println(e.toString());
+        }
+        
     }
 }

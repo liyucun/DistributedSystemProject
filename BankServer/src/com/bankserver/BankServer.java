@@ -13,9 +13,11 @@ import java.rmi.registry.Registry;
 public class BankServer {
 
     public static void main(String[] args) throws RemoteException, AlreadyBoundException{
-        BankServerImpl impl = new BankServerImpl();
+        BankServerImpl impl = new BankServerImpl(Constant.BANK_TD_RMI_ID, Constant.BANK_TD_RMI_PORT);
         Registry registry = LocateRegistry.createRegistry(Constant.BANK_TD_RMI_PORT);
         registry.bind(Constant.BANK_TD_RMI_ID, impl);
+        impl.start();
+        
         System.out.println("server start");
     }
 }
