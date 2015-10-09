@@ -211,22 +211,23 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
         
         StringBuilder result = new StringBuilder();
         result.append("CustomerAccount Info:"+"\n");
-        
+        result.append("ID FIrstName LastName Email Phone Credit"+"\n");
         for(String ch : Constant.ALPHABET){
             ArrayList<CustomerAccount> list = customerAccount_HashMap.get(ch);
             for(CustomerAccount account : list){
                 result.append(account.getCustomerAccountNumber() + " "
-                                + account.getFirstName() + " " + account.getLastName()
+                                + account.getFirstName() + " " + account.getLastName() + " "
                                 + account.getEmailAddress() + " " + account.getPhoneNumber()
-                                + " credit limit: " + account.getCreditLimit() + "\n");
+                                + " " + account.getCreditLimit() + "\n");
             }
             
         }
         
         result.append("Loan Info:"+"\n");
+        result.append("ID CustomerID DueDate LoanAmount"+"\n");
         for(Loan loan : loan_HashMap.values()){
             result.append(loan.getID() + " " + loan.getCustomerAccountNumber()
-                            + " " + loan.getDueDate() + " " + loan.getAmount());
+                            + " " + loan.getDueDate() + " days left" + " " + loan.getAmount() + "\n");
         }
         
         return result.toString();

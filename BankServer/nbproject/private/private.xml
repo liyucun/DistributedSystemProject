@@ -6,6 +6,7 @@
             <file>file:/Users/yucunli/SourceTreeRepo/DistributedSystemProject/BankServer/src/com/bankserver/BankServerImpl.java</file>
             <file>file:/Users/yucunli/SourceTreeRepo/DistributedSystemProject/BankServer/src/com/bankserver/model/Loan.java</file>
             <file>file:/Users/yucunli/SourceTreeRepo/DistributedSystemProject/BankServer/src/com/bankserver/model/CustomerAccount.java</file>
+            <file>file:/Users/yucunli/SourceTreeRepo/DistributedSystemProject/BankServer/test/com/test/bankserver/BankServerImplTest.java</file>
             <file>file:/Users/yucunli/SourceTreeRepo/DistributedSystemProject/BankServer/src/com/bankserver/model/Manager.java</file>
             <file>file:/Users/yucunli/SourceTreeRepo/DistributedSystemProject/BankServer/src/com/bankserver/BankServer.java</file>
         </group>

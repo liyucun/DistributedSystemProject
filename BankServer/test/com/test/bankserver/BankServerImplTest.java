@@ -54,6 +54,7 @@ public class BankServerImplTest {
         implBMO.openAccount("BMO", "Y", "B", "b@gmail.com", "123", "pass");
         implBMO.openAccount("BMO", "Y", "C", "c@gmail.com", "123", "pass");
         implBMO.openAccount("BMO", "Y", "D", "d@gmail.com", "123", "pass");
+        System.out.println(implBMO.openAccount("BMO", "Y", "D", "d@gmail.com", "123", "pass"));
         
         implScotia.openAccount("Scotia", "Y", "A", "a@gmail.com", "123", "pass");
         implScotia.openAccount("Scotia", "Y", "B", "b@gmail.com", "123", "pass");
@@ -76,5 +77,10 @@ public class BankServerImplTest {
         System.out.println(implTD.getLoan("Scotia", "9", "pass", 500));
         System.out.println(implTD.getLoan("Scotia", "10", "pass", 600));
         System.out.println(implTD.getLoan("Scotia", "11", "pass", 300));
+        
+        System.out.println("------------------------------");
+        System.out.println(implBMO.printCustomerInfo("BMO"));
+        implBMO.delayPayment("BMO", 1+"", 100, 50);
+        System.out.println(implBMO.printCustomerInfo("BMO"));
     }
 }
