@@ -9,7 +9,7 @@ import java.rmi.RemoteException;
  */
 public interface ManagerInterface extends Remote{
     
-    public void delayPayment(String bank, String loanID, int currentDueDate, int newDueDate) throws RemoteException;
+    public String delayPayment(String bank, String loanID, int currentDueDate, int newDueDate) throws RemoteException;
     
     public String printCustomerInfo(String bank) throws RemoteException;
 }

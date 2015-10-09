@@ -179,7 +179,7 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
     }
 
     @Override
-    public void delayPayment(String bank, String loanID, int currentDueDate, int newDueDate) throws RemoteException {
+    public String delayPayment(String bank, String loanID, int currentDueDate, int newDueDate) throws RemoteException {
         // server side do not need know bank name
         
         /**
@@ -190,13 +190,17 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
          */
         
         // need login process?
+        String result = bank_server_rmi_id + ": ";
         
         Loan loan = loan_HashMap.get(loanID);
         if(loan != null){
             loan.setDueDate(newDueDate);
+            result += "LoanID: " + loan.getID() + " has been extended " + newDueDate + " remaining days, enjoy";
+        }else{
+            result += "Not able found your LoanID: " + loanID;
         }
         
-        
+        return result;
     }
 
     @Override

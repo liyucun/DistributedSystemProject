@@ -14,10 +14,50 @@ import java.rmi.registry.Registry;
 public class ManagerClient {
 
     public static void main(String[] args) throws RemoteException, NotBoundException{
-        Registry registry = LocateRegistry.getRegistry("localhost", Constant.BANK_TD_RMI_PORT);
-        ManagerInterface lookup = (ManagerInterface) registry.lookup(Constant.BANK_TD_RMI_ID);
+        ManagerClient client = new ManagerClient();
         
-        System.out.print(lookup.printCustomerInfo("TD"));
+        client.delayPayment(Constant.BANK_SCOTIA_RMI_ID, 2+"", 200, 300);
+        client.printCustomerInfo(Constant.BANK_SCOTIA_RMI_ID);
+    }
+    
+    public void delayPayment(String bank, String loanID, int currentDueDate, int newDueDate) 
+            throws RemoteException, NotBoundException{
+    
+        Registry registry = null;
+        ManagerInterface lookup = null;
+        
+        if(bank.equals(Constant.BANK_SCOTIA_RMI_ID)){
+            registry = LocateRegistry.getRegistry("localhost", Constant.BANK_SCOTIA_RMI_PORT);
+            lookup = (ManagerInterface) registry.lookup(Constant.BANK_SCOTIA_RMI_ID);
+        }else if(bank.equals(Constant.BANK_BMO_RMI_ID)){
+            registry = LocateRegistry.getRegistry("localhost", Constant.BANK_BMO_RMI_PORT);
+            lookup = (ManagerInterface) registry.lookup(Constant.BANK_BMO_RMI_ID);
+        }else if(bank.equals(Constant.BANK_TD_RMI_ID)){
+            registry = LocateRegistry.getRegistry("localhost", Constant.BANK_TD_RMI_PORT);
+            lookup = (ManagerInterface) registry.lookup(Constant.BANK_TD_RMI_ID);
+        }
+        
+        System.out.println(lookup.delayPayment(bank, loanID, currentDueDate, newDueDate));
+        
+    }
+    
+    
+    public void printCustomerInfo(String bank) throws RemoteException, NotBoundException {
+        Registry registry = null;
+        ManagerInterface lookup = null;
+        
+        if(bank.equals(Constant.BANK_SCOTIA_RMI_ID)){
+            registry = LocateRegistry.getRegistry("localhost", Constant.BANK_SCOTIA_RMI_PORT);
+            lookup = (ManagerInterface) registry.lookup(Constant.BANK_SCOTIA_RMI_ID);
+        }else if(bank.equals(Constant.BANK_BMO_RMI_ID)){
+            registry = LocateRegistry.getRegistry("localhost", Constant.BANK_BMO_RMI_PORT);
+            lookup = (ManagerInterface) registry.lookup(Constant.BANK_BMO_RMI_ID);
+        }else if(bank.equals(Constant.BANK_TD_RMI_ID)){
+            registry = LocateRegistry.getRegistry("localhost", Constant.BANK_TD_RMI_PORT);
+            lookup = (ManagerInterface) registry.lookup(Constant.BANK_TD_RMI_ID);
+        }
+        
+        System.out.println(lookup.printCustomerInfo(bank));
     }
     
 }

@@ -18,6 +18,9 @@ public class CustomerClient {
         CustomerClient client = new CustomerClient();
         client.openAccount(Constant.BANK_TD_RMI_ID, "Yucun", "Li", "email@mail.ca", "514444", "123");
         client.getLoan(Constant.BANK_TD_RMI_ID, 1+"", "123", 300);
+        
+        client.openAccount(Constant.BANK_SCOTIA_RMI_ID, "Yucun", "Li", "email@mail.ca", "514444", "123");
+        client.getLoan(Constant.BANK_SCOTIA_RMI_ID, 2+"", "123", 300);
     }
     
     public void openAccount(String bank, String firstName, String lastName, 
