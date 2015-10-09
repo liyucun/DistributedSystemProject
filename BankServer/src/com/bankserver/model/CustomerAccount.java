@@ -16,11 +16,12 @@ public class CustomerAccount {
     private String password; // at least 6 characters
     private int creditLimit;
 
-    public CustomerAccount(String firstName, String lastName, String emailAddress, String password) {
+    public CustomerAccount(String firstName, String lastName, String emailAddress, String phoneNumber, String password) {
         this.customerAccountNumber = (++uniqueID) + "";
         this.firstName = firstName;
         this.lastName = lastName;
         this.emailAddress = emailAddress;
+        this.phoneNumber = phoneNumber;
         this.password = password;
         
         this.creditLimit = 500;

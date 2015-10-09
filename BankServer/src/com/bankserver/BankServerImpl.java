@@ -70,7 +70,7 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
         }
         
         if(!foundAccount){
-            CustomerAccount account = new CustomerAccount(firstName, lastName, emailAddress, password);
+            CustomerAccount account = new CustomerAccount(firstName, lastName, emailAddress, phoneNumber, password);
             list.add(account);
             
             customerAccount_HashMap_Internal.put(account.getCustomerAccountNumber(), account);
