@@ -156,14 +156,14 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
                         loan_HashMap.put(loan.getID(), loan);
                         
                         result = bank_server_rmi_id + ": " + account.getFirstName() + " "
-                                + account.getLastName() + " We have successfully dealt with your loan!!! Amazing job!!!";
+                                + account.getLastName() + ", We have successfully dealt with your loan!!! Amazing job!!!";
                     }else{
                         result = bank_server_rmi_id + ": " + "Your rest credit is negative, please give Yucun cash ASAP!";
                     }
                     
                 }else{
                     result = bank_server_rmi_id + ": " + account.getFirstName() + " "
-                            + account.getLastName() + " Sorry, your credit limit is exceeded bank limit"
+                            + account.getLastName() + ", Sorry, your credit limit is exceeded bank limit"
                             + ", please contact with manager Mr.Yucun";
                 }
                 
