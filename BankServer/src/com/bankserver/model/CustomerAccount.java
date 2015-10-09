@@ -23,7 +23,9 @@ public class CustomerAccount {
         this.emailAddress = emailAddress;
         this.password = password;
         
-        System.out.println(customerAccountNumber + "");
+        this.creditLimit = 500;
+        
+        System.out.println("Customer Account: " + customerAccountNumber + " created");
     }
 
     public String getCustomerAccountNumber() {

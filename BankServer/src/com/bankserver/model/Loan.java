@@ -1,15 +1,30 @@
 package com.bankserver.model;
 
+import com.bankinterface.Constant;
+
 /**
  *
  * @author yucunli
  */
 public class Loan {
+    
+    private static int uniqueID = 0;
 
     private String ID;
     private String customerAccountNumber;
     private int amount;
-    private String dueDate;
+    private int dueDate;
+
+    public Loan(String customerAccountNumber, int amount) {
+        this.ID = (++uniqueID) + "";
+        
+        this.customerAccountNumber = customerAccountNumber;
+        this.amount = amount;
+        
+        this.dueDate = Constant.DEFAULT_DUEDATE;
+        
+        System.out.println("Loan :" + ID + " created");
+    }
 
     public String getID() {
         return ID;
@@ -35,11 +50,11 @@ public class Loan {
         this.amount = amount;
     }
 
-    public String getDueDate() {
+    public int getDueDate() {
         return dueDate;
     }
 
-    public void setDueDate(String dueDate) {
+    public void setDueDate(int dueDate) {
         this.dueDate = dueDate;
     }
     

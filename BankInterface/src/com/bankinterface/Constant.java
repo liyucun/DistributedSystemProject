@@ -16,5 +16,5 @@ public class Constant {
                         "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"};
     
     public static final String SEPERATOR = ";";
-    
+    public static final int DEFAULT_DUEDATE = 100;
 }

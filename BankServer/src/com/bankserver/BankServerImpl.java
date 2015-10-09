@@ -13,8 +13,11 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -39,6 +42,7 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
         
         customerAccount_HashMap = new HashMap<String, ArrayList<CustomerAccount>>();
         loan_HashMap = new HashMap<String, Loan>();
+        customerAccount_HashMap_Internal = new HashMap<String, CustomerAccount>();
         
         for(String ch : Constant.ALPHABET){
             customerAccount_HashMap.put(ch, new ArrayList<CustomerAccount>());
@@ -120,7 +124,7 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
                         byte[] sendData = new byte[1024];
                         byte[] receiveData = new byte[1024];
                         
-                        sendData = (account.getLastName() + Constant.SEPERATOR + account.getEmailAddress()).getBytes();
+                        sendData = (account.getLastName() + Constant.SEPERATOR + account.getEmailAddress() + Constant.SEPERATOR).getBytes();
                         
                         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
                         clientSocket.send(sendPacket);
@@ -129,7 +133,8 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
                         String reply = new String(receivePacket.getData());
                         clientSocket.close();
                         
-                        if(reply.equals(CreditLimitState.EXCEED_LIMIT.toString())){
+                        String[] reply_array = reply.split(Constant.SEPERATOR);
+                        if(reply_array[0].equals(CreditLimitState.EXCEED_LIMIT.toString())){
                             isExceedLimit = true;
                             break;
                         }
@@ -143,8 +148,19 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
                 }
                 
                 if(!isExceedLimit){
-                    result = bank_server_rmi_id + ": " + account.getFirstName() + " "
-                            + account.getLastName() + "We have successfully dealt with your loan!!! Amazing job!!!";
+                    
+                    if(account.getCreditLimit() >= 0){
+                        // get loan from bank
+                        account.setCreditLimit(account.getCreditLimit() - loanAmount);
+                        Loan loan = new Loan(account.getCustomerAccountNumber(), loanAmount);
+                        loan_HashMap.put(loan.getID(), loan);
+                        
+                        result = bank_server_rmi_id + ": " + account.getFirstName() + " "
+                                + account.getLastName() + " We have successfully dealt with your loan!!! Amazing job!!!";
+                    }else{
+                        result = bank_server_rmi_id + ": " + "Your rest credit is negative, please give Yucun cash ASAP!";
+                    }
+                    
                 }else{
                     result = bank_server_rmi_id + ": " + account.getFirstName() + " "
                             + account.getLastName() + " Sorry, your credit limit is exceeded bank limit"
@@ -163,7 +179,7 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
     }
 
     @Override
-    public void delayPayment(String bank, String loanID, String currentDueDate, String newDueDate) throws RemoteException {
+    public void delayPayment(String bank, String loanID, int currentDueDate, int newDueDate) throws RemoteException {
         // server side do not need know bank name
         
         /**
@@ -241,12 +257,20 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
                 String[] account_info = sentence.split(Constant.SEPERATOR);
                 ArrayList<CustomerAccount> list = customerAccount_HashMap.get(account_info[0].toLowerCase().substring(0, 1));
                 for(CustomerAccount account : list){
+                    
+                    
+                    
                     if(account.getEmailAddress().equals(account_info[1])){
-                        // how to design due/creditlimit problem
+                        // if its limit is not below 0
+                        if(account.getCreditLimit() >= 0){
+                            sendData = (CreditLimitState.NOT_EXCEED_LIMIT + Constant.SEPERATOR).toString().getBytes();
+                        }else{
+                            sendData = (CreditLimitState.EXCEED_LIMIT + Constant.SEPERATOR).toString().getBytes();
+                        }
+                        
                     }
                 }
                 
-                sendData = "result to be sent".getBytes();
                 DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
                 serverSocket.send(sendPacket);
             }
