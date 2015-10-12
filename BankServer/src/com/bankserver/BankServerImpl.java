@@ -6,7 +6,11 @@ import com.bankinterface.CustomerInterface;
 import com.bankinterface.ManagerInterface;
 import com.bankserver.model.CustomerAccount;
 import com.bankserver.model.Loan;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -20,6 +24,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -48,6 +54,8 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
             customerAccount_HashMap.put(ch, new ArrayList<CustomerAccount>());
         }
         
+        log(bank_server_rmi_id + " server created");
+        
     }
 
     @Override
@@ -74,6 +82,9 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
             list.add(account);
             
             customerAccount_HashMap_Internal.put(account.getCustomerAccountNumber(), account);
+            
+            log(firstName + lastName + " " + " create account : " + account.getCustomerAccountNumber());
+            logCustomer(account.getCustomerAccountNumber(), "account created");
             
             return account.getCustomerAccountNumber();
         }else{
@@ -167,6 +178,8 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
                             + ", please contact with manager Mr.Yucun";
                 }
                 
+                logCustomer(accountNumber, "GetLoan performed \n" + result);
+                
             }else{
                 result = bank_server_rmi_id + ": Your password is wrong, please check another one";
             }
@@ -174,6 +187,7 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
             result = bank_server_rmi_id + ": Can not find your account in our bank";
         }
         
+        log("Account " + accountNumber + " tried to get loan, and the result shows " + result);
         
         return result;
     }
@@ -199,6 +213,9 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
         }else{
             result += "Not able found your LoanID: " + loanID;
         }
+        
+        log("Loan " + loanID + " has been delayed from " + currentDueDate + " to " + newDueDate);
+        logManager("Loan " + loanID + " has been delayed from " + currentDueDate + " to " + newDueDate);
         
         return result;
     }
@@ -233,6 +250,9 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
             result.append(loan.getID() + " " + loan.getCustomerAccountNumber()
                             + " " + loan.getDueDate() + " days left" + " " + loan.getAmount() + "\n");
         }
+        
+        log("printCustomerInfo has been called");
+        logManager("printCustomerInfo has been called");
         
         return result.toString();
     }
@@ -285,5 +305,57 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
             System.out.println(e.toString());
         }
         
+    }
+    
+    private void log(String content){
+        
+        File dir = new File(bank_server_rmi_id); 
+        dir.mkdir();
+        
+        String path = "./"+ bank_server_rmi_id +"/log.txt";
+        
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        
+        try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path, true)))) {
+            out.println(dateFormat.format(date) + "    " + content);
+            
+        }catch (IOException e) {
+            
+        }
+    }
+    
+    private void logCustomer(String id, String content){
+        File dir = new File(bank_server_rmi_id); 
+        dir.mkdir();
+        
+        String path = "./" + bank_server_rmi_id + "/Customer"+ id +".txt";
+        
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        
+        try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path, true)))) {
+            out.println(dateFormat.format(date) + "    " + content);
+            
+        }catch (IOException e) {
+            
+        }
+    }
+    
+    private void logManager(String content){
+        File dir = new File(bank_server_rmi_id); 
+        dir.mkdir();
+        
+        String path = "./"+bank_server_rmi_id+"/Manager.txt";
+        
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        
+        try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path, true)))) {
+            out.println(dateFormat.format(date) + "    " + content);
+            
+        }catch (IOException e) {
+            
+        }
     }
 }
