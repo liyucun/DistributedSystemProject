@@ -24,7 +24,7 @@ public class CustomerClient {
         
         //client.openAccount(Constant.BANK_SCOTIA_RMI_ID, "Yucun", "Li", "email@mail.ca", "514444", "123");
         //client.getLoan(Constant.BANK_SCOTIA_RMI_ID, 2+"", "123", 300);
-        System.out.println("Welcome to our bank system client!");
+        System.out.println("Welcome to our bank system customer client!");
         boolean login = true;
         while(login){
             client.console();
