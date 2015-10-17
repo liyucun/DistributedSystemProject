@@ -22,6 +22,7 @@ public class ManagerClient {
         //client.delayPayment(Constant.BANK_SCOTIA_RMI_ID, 2+"", 200, 300);
         //client.printCustomerInfo(Constant.BANK_SCOTIA_RMI_ID);
         System.out.println("Welcome to our bank system manager client!");
+        
         boolean login = true;
         while(login){
             client.console();

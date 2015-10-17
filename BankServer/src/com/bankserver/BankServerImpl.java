@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,9 +34,9 @@ import java.util.logging.Logger;
  */
 public class BankServerImpl extends UnicastRemoteObject implements CustomerInterface, ManagerInterface, Runnable{
 
-    HashMap<String, ArrayList<CustomerAccount>> customerAccount_HashMap;
-    HashMap<String, CustomerAccount> customerAccount_HashMap_Internal;
-    HashMap<String, Loan> loan_HashMap;
+    Hashtable<String, ArrayList<CustomerAccount>> customerAccount_HashMap;
+    Hashtable<String, CustomerAccount> customerAccount_HashMap_Internal;
+    Hashtable<String, Loan> loan_HashMap;
     
     private int bank_server_rmi_port;
     private String bank_server_rmi_id;
@@ -46,9 +47,9 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
         this.bank_server_rmi_id = bank_server_rmi_id;
         this.bank_server_rmi_port = bank_server_rmi_port;
         
-        customerAccount_HashMap = new HashMap<String, ArrayList<CustomerAccount>>();
-        loan_HashMap = new HashMap<String, Loan>();
-        customerAccount_HashMap_Internal = new HashMap<String, CustomerAccount>();
+        customerAccount_HashMap = new Hashtable<String, ArrayList<CustomerAccount>>();
+        loan_HashMap = new Hashtable<String, Loan>();
+        customerAccount_HashMap_Internal = new Hashtable<String, CustomerAccount>();
         
         for(String ch : Constant.ALPHABET){
             customerAccount_HashMap.put(ch, new ArrayList<CustomerAccount>());
