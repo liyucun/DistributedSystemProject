@@ -127,36 +127,45 @@ public class BankServerImpl extends UnicastRemoteObject implements CustomerInter
                     other_bank_servers.add(Constant.BANK_TD_RMI_PORT);
                 }
                 
-                boolean isExceedLimit = false;
+                final boolean isExceedLimit = false;
                 
                 for(Integer port : other_bank_servers){
-                    try{
-                        DatagramSocket clientSocket = new DatagramSocket();
-                        InetAddress IPAddress = InetAddress.getByName("localhost");
-                        byte[] sendData = new byte[1024];
-                        byte[] receiveData = new byte[1024];
-                        
-                        sendData = (account.getLastName() + Constant.SEPERATOR + account.getEmailAddress() + Constant.SEPERATOR).getBytes();
-                        
-                        DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-                        clientSocket.send(sendPacket);
-                        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-                        clientSocket.receive(receivePacket);
-                        String reply = new String(receivePacket.getData());
-                        clientSocket.close();
-                        
-                        String[] reply_array = reply.split(Constant.SEPERATOR);
-                        if(reply_array[0].equals(CreditLimitState.EXCEED_LIMIT.toString())){
-                            isExceedLimit = true;
-                            break;
+                    
+                    new Thread(){
+                    
+                        public void run(){
+                            try{
+                                DatagramSocket clientSocket = new DatagramSocket();
+                                InetAddress IPAddress = InetAddress.getByName("localhost");
+                                byte[] sendData = new byte[1024];
+                                byte[] receiveData = new byte[1024];
+
+                                sendData = (account.getLastName() + Constant.SEPERATOR + account.getEmailAddress() + Constant.SEPERATOR).getBytes();
+
+                                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
+                                clientSocket.send(sendPacket);
+                                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                                clientSocket.receive(receivePacket);
+                                String reply = new String(receivePacket.getData());
+                                clientSocket.close();
+
+                                String[] reply_array = reply.split(Constant.SEPERATOR);
+                                if(reply_array[0].equals(CreditLimitState.EXCEED_LIMIT.toString())){
+                                    //isExceedLimit = true;
+                                }
+
+                            }catch(Exception e){
+                                System.out.println("**********************");
+                                System.out.println(bank_server_rmi_id + "getLoan");
+                                System.out.println("**********************");
+                                System.out.println(e.toString());
+                            }
+                            
                         }
                         
-                    }catch(Exception e){
-                        System.out.println("**********************");
-                        System.out.println(bank_server_rmi_id + "getLoan");
-                        System.out.println("**********************");
-                        System.out.println(e.toString());
-                    }
+                    }.start();
+                    
+                    
                 }
                 
                 if(!isExceedLimit){
