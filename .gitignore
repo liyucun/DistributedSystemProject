@@ -20,3 +20,6 @@ nbdist/
 nbactions.xml
 nb-configuration.xml
 .nb-gradle/
+/Assignment2/DistributedLoanManagementSystem/nbproject/private/
+/Assignment2/BankClient/nbproject/private/
+/Assignment2/Bank/nbproject/private/

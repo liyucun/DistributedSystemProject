@@ -1,0 +1,34 @@
+module BankApp{
+
+    struct Loan{
+        string ID;
+        string accountNumber;
+        long amount;
+        long dueDate;
+    };
+
+    struct Account{
+        string accountNumber;
+        string firstName;
+        string lastName;
+        string emailAddress;
+        string phoneNumber;
+        string password;
+        long creditLimit;
+    };
+
+    interface Client
+    {
+        Account openAccount(in string bank, in string firstName, in string lastName, 
+            in string emailAddress, in string phoneNumber, in string password);
+
+        Loan getLoan(in string bank, in string accountNumber, in string password, in long loanAmount);
+
+        Loan transferLoan(in string loanID, in string currentBank, in string otherBank);
+
+        string delayPayment(in string bank, in string loanID, in long currentDueDate, in long newDueDate);
+        
+        string printCustomerInfo(in string bank);
+    };
+
+};
