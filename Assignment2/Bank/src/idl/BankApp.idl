@@ -24,7 +24,7 @@ module BankApp{
 
         Loan getLoan(in string bank, in string accountNumber, in string password, in long loanAmount);
 
-        Loan transferLoan(in string loanID, in string currentBank, in string otherBank);
+        string transferLoan(in string loanID, in string currentBank, in string otherBank);
 
         string delayPayment(in string bank, in string loanID, in long currentDueDate, in long newDueDate);
         

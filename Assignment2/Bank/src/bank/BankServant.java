@@ -16,8 +16,6 @@ import org.omg.CORBA.ORB;
  */
 public class BankServant extends ClientPOA{
     
-    private static int uniqueAccountID = 1;
-    private static int loanID = 1;
     private static final int DEFAULT_CREDIT = 500;
     private static final int DEFAULT_DUEDATE = 100;
     
@@ -28,6 +26,8 @@ public class BankServant extends ClientPOA{
     
     public int port;
     public int[] rest_port;
+    public static int uniqueAccountID = 1;
+    public static int loanID = 1;
 
     public BankServant(ORB orb) {
         this.orb = orb;
@@ -107,8 +107,41 @@ public class BankServant extends ClientPOA{
     }
 
     @Override
-    public Loan transferLoan(String loanID, String currentBank, String otherBank) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public String transferLoan(String loanID, String currentBank, String otherBank) {
+        
+        if(loan_HashMap.get(loanID) == null){
+            return "Not found loan";
+        }
+        
+        Loan loan = loan_HashMap.get(loanID);
+        
+        Thread transferThread = new Thread(){
+            
+            @Override
+            public void run(){
+                
+                //send loan information to specific server
+                //receive result from them
+                
+                
+            }
+            
+        };
+        
+        transferThread.start();
+        
+        try{
+            transferThread.join();
+        }catch(Exception ex){
+        
+        }
+        // return result Yes/True
+        // operate on local database
+        
+        //if operation done well
+        //if not well -> roll back
+        
+        return "";
     }
 
     @Override

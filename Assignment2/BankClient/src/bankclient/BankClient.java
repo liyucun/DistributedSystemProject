@@ -9,6 +9,9 @@ package bankclient;
 import BankApp.Account;
 import BankApp.Client;
 import BankApp.ClientHelper;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import org.omg.CORBA.ORB;
 import org.omg.CosNaming.NamingContextExt;
 import org.omg.CosNaming.NamingContextExtHelper;
@@ -23,18 +26,24 @@ public class BankClient {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        
         try{
+            String path = System.getProperty("user.dir");
+            path = path.substring(0, path.lastIndexOf("/") + 1);
+            
+            File f = new File(path + "bankCIOR.txt");
+            BufferedReader br = new BufferedReader(new FileReader(f));
+            String IOR = br.readLine();
+            br.close();
+            
+            System.out.println(IOR);
             
             ORB orb = ORB.init(args, null);
-            org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
-            NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
+            org.omg.CORBA.Object obj = orb.string_to_object(IOR); 
+            Client client = ClientHelper.narrow(obj);
             
-            Client client = (Client) ClientHelper.narrow(ncRef.resolve_str("ABC"));
-        
-            Account account = client.openAccount("yucun", "yucun", "yucun", "yucun", "yucun", "yucun");
-        
-            System.out.println(account.accountNumber);
-        
+            System.out.println(client.transferLoan("100", "10", "1"));
+            
         }catch(Exception ex){
         
         }
