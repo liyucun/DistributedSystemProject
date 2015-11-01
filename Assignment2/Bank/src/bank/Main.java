@@ -25,16 +25,24 @@ public class Main {
             
             BankServant Bank_A = new BankServant(orb);
             Bank_A.port = 2298;
-            Bank_A.uniqueAccountID = 1;
-            Bank_A.loanID = 1;
+            Bank_A.uniqueAccountID_Base = 1;
+            Bank_A.loanID_Base = 1;
+            Bank_A.rest_port[0] = 5298;
+            Bank_A.rest_port[1] = 7298;
+            
             BankServant Bank_B = new BankServant(orb);
             Bank_B.port = 5298;
-            Bank_B.uniqueAccountID = 1000;
-            Bank_B.loanID = 1000;
+            Bank_B.uniqueAccountID_Base = 1000;
+            Bank_B.loanID_Base = 1000;
+            Bank_B.rest_port[0] = 2298;
+            Bank_B.rest_port[1] = 7298;
+            
             BankServant Bank_C = new BankServant(orb);
             Bank_C.port = 7298;
-            Bank_C.uniqueAccountID = 2000;
-            Bank_C.loanID = 2000;
+            Bank_C.uniqueAccountID_Base = 2000;
+            Bank_C.loanID_Base = 2000;
+            Bank_C.rest_port[0] = 2298;
+            Bank_C.rest_port[1] = 5298;
             
             String path = System.getProperty("user.dir");
             path = path.substring(0, path.lastIndexOf("/") + 1);

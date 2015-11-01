@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package bankclient;
 
 import BankApp.Account;
@@ -31,7 +25,7 @@ public class BankClient {
             String path = System.getProperty("user.dir");
             path = path.substring(0, path.lastIndexOf("/") + 1);
             
-            File f = new File(path + "bankCIOR.txt");
+            File f = new File(path + "bankBIOR.txt");
             BufferedReader br = new BufferedReader(new FileReader(f));
             String IOR = br.readLine();
             br.close();
@@ -42,7 +36,11 @@ public class BankClient {
             org.omg.CORBA.Object obj = orb.string_to_object(IOR); 
             Client client = ClientHelper.narrow(obj);
             
-            System.out.println(client.transferLoan("100", "10", "1"));
+            System.out.println("************");
+            
+            //System.out.println(client.openAccount("A", "yucun", "Lyucun", "Liyucun@gmail.com", "13456789", "pass"));
+            //System.out.println(client.getLoan("A", "1", "pass", 200));
+            System.out.println(client.transferLoan("1", "B", "2298"));
             
         }catch(Exception ex){
         

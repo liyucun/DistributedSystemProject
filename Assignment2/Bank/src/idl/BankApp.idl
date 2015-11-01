@@ -19,10 +19,10 @@ module BankApp{
 
     interface Client
     {
-        Account openAccount(in string bank, in string firstName, in string lastName, 
+        string openAccount(in string bank, in string firstName, in string lastName, 
             in string emailAddress, in string phoneNumber, in string password);
 
-        Loan getLoan(in string bank, in string accountNumber, in string password, in long loanAmount);
+        string getLoan(in string bank, in string accountNumber, in string password, in long loanAmount);
 
         string transferLoan(in string loanID, in string currentBank, in string otherBank);
 

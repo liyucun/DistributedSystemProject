@@ -8,6 +8,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import org.omg.CORBA.ORB;
 
 /**
@@ -15,6 +16,9 @@ import org.omg.CORBA.ORB;
  * @author yucunli
  */
 public class BankServant extends ClientPOA{
+    
+    public static final String[] alphabet = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o",
+                        "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"};
     
     private static final int DEFAULT_CREDIT = 500;
     private static final int DEFAULT_DUEDATE = 100;
@@ -25,21 +29,25 @@ public class BankServant extends ClientPOA{
     private ORB orb;
     
     public int port;
-    public int[] rest_port;
-    public static int uniqueAccountID = 1;
-    public static int loanID = 1;
+    public int[] rest_port = new int[2];
+    public int uniqueAccountID_Base;
+    public int loanID_Base;
 
     public BankServant(ORB orb) {
         this.orb = orb;
         account_HashMap = new HashMap<String, ArrayList<Account>>();
         loan_HashMap = new HashMap<String, Loan>();
         
+        for(String ch : alphabet){
+            account_HashMap.put(ch, new ArrayList<Account>());
+        }
+        
         BankAsReceiver receiver = new BankAsReceiver();
         receiver.start();
     }
 
     @Override
-    public Account openAccount(String bank, String firstName, String lastName, String emailAddress, String phoneNumber, String password) {
+    public String openAccount(String bank, String firstName, String lastName, String emailAddress, String phoneNumber, String password) {
         Account account = null;
         
         boolean foundAccount = false;
@@ -51,19 +59,20 @@ public class BankServant extends ClientPOA{
         }
         
         if(!foundAccount){
-            account = new Account(""+uniqueAccountID++, firstName, lastName, emailAddress, phoneNumber, password, DEFAULT_CREDIT);
+            
+            account = new Account(""+uniqueAccountID_Base, firstName, lastName, emailAddress, phoneNumber, password, DEFAULT_CREDIT);
             list.add(account);
             
             //log(firstName + lastName + " " + " create account : " + account.accountNumber);
             //logCustomer(account.getCustomerAccountNumber(), "account created");
-            
+            return account.accountNumber + " has been created for user " + firstName + " " + lastName;
+        }else{
+            return "Acount is already existed!";
         }
-        
-        return account;
     }
 
     @Override
-    public Loan getLoan(String bank, String accountNumber, String password, int loanAmount) {
+    public String getLoan(String bank, String accountNumber, String password, int loanAmount) {
         
         Account foundAccount = null;
         Loan loan = null;
@@ -72,25 +81,29 @@ public class BankServant extends ClientPOA{
             for(Account account : account_list){
                 if(account.accountNumber.equals(accountNumber)){
                     foundAccount = account;
+                    break;
                 }
             }
         }
         
         if(foundAccount != null && foundAccount.password.equals(password)){
             
-            boolean isExceedLimit = false;
+            BankAsClient client0 = new BankAsClient(rest_port[0], "search"+":"+foundAccount.lastName+","+foundAccount.emailAddress+ ":");
+            BankAsClient client1 = new BankAsClient(rest_port[1], "search"+":"+foundAccount.lastName+","+foundAccount.emailAddress+ ":");
             
-            BankAsClient client0 = new BankAsClient(foundAccount.lastName, foundAccount.emailAddress, rest_port[0]);
-            BankAsClient client1 = new BankAsClient(foundAccount.lastName, foundAccount.emailAddress, rest_port[1]);
+            Thread th1 = client0.start();
+            Thread th2 = client1.start();
+            try{
+                th1.join();
+                th2.join();
+            }catch(Exception ex){
+                return ex.getMessage();
+            }
             
-            client0.start();
-            client1.start();
-            client0.join();
-            client1.join();
             
-            if(client0.getResult() && client1.getResult()){
+            if(!(client0.getResult().equals("Exceed") || client1.getResult().equals("Exceed"))){
                 loan = new Loan();
-                loan.ID = "" + loanID++;
+                loan.ID = "" + loanID_Base;
                 loan.accountNumber = accountNumber;
                 loan.amount = loanAmount;
                 loan.dueDate = DEFAULT_DUEDATE;
@@ -103,7 +116,11 @@ public class BankServant extends ClientPOA{
             }
         }
         
-        return loan;
+        if(loan == null){
+            return "Not able to create your loan request";
+        }else{
+            return loan.ID + " has been created";
+        }
     }
 
     @Override
@@ -114,34 +131,58 @@ public class BankServant extends ClientPOA{
         }
         
         Loan loan = loan_HashMap.get(loanID);
+        Account foundAccount = null;
         
-        Thread transferThread = new Thread(){
+        for(ArrayList<Account> account_list : account_HashMap.values()){
+            for(Account account : account_list){
+                if(account.accountNumber.equals(loan.accountNumber)){
+                    foundAccount = account;
+                    break;
+                }
+            }
+        }
+        
+        synchronized(foundAccount){
             
-            @Override
-            public void run(){
-                
-                //send loan information to specific server
-                //receive result from them
-                
-                
+            try{
+                String content = "transfer" + ":" + loan.ID + "," + loan.accountNumber + "," + loan.dueDate + "," + loan.amount 
+                            + "#" + foundAccount.accountNumber + "," + foundAccount.firstName + "," + foundAccount.lastName + "," + foundAccount.emailAddress + "," + foundAccount.phoneNumber + "," + foundAccount.password + "," + foundAccount.creditLimit
+                            + ":";
+                BankAsClient client = new BankAsClient(Integer.valueOf(otherBank), content);
+                Thread th = client.start();
+                th.join();
+
+                // return result Yes/True
+                // operate on local database
+                if(client.getResult().equals("No")){
+                    //do nothing, just return
+                    return "Please try again";
+                }
+
+                //if operation done well
+                //if not well -> roll back
+                loan_HashMap.remove(loan);
+                if(loan_HashMap.get(loan.ID) != null){
+                    content = "rollback"+"#"+foundAccount.lastName+","+foundAccount.accountNumber+","+loan.ID+"#";
+                    client = new BankAsClient(Integer.valueOf(otherBank), content);
+                    Thread th1 = client.start();
+                    th1.join();
+
+                    if(client.getResult().equals("No")){
+                        //do nothing, just return
+                        return "Please try again";
+                    }
+                }else{
+                    foundAccount.creditLimit = foundAccount.creditLimit + loan.amount;
+                }
+        
+            }catch(Exception ex){
+                System.out.println(ex.toString());
             }
             
-        };
-        
-        transferThread.start();
-        
-        try{
-            transferThread.join();
-        }catch(Exception ex){
-        
         }
-        // return result Yes/True
-        // operate on local database
         
-        //if operation done well
-        //if not well -> roll back
-        
-        return "";
+        return "Successful transfered loan";
     }
 
     @Override
@@ -158,27 +199,23 @@ public class BankServant extends ClientPOA{
     
     class BankAsClient implements Runnable{
 
-        private volatile boolean isExceedLimit = false;
-        private String lastName;
-        private String emailAddress;
         private int otherBankPort;
+        private String content;
+        private String result;
         
-        public BankAsClient(String lastName, String emailAddress, int otherBankPort){
-            this.lastName = lastName;
-            this.emailAddress = emailAddress;
+        public BankAsClient(int otherBankPort, String content){
             this.otherBankPort = otherBankPort;
+            this.content = content;
         }
         
-        public void start(){
-            new Thread(this).start();
+        public Thread start(){
+            Thread thread = new Thread(this);
+            thread.start();
+            return thread;
         }
         
-        public void join(){
-            this.join();
-        }
-        
-        public boolean getResult(){
-            return isExceedLimit;
+        public String getResult(){
+            return result;
         }
         
         @Override
@@ -189,7 +226,7 @@ public class BankServant extends ClientPOA{
                     byte[] sendData = new byte[1024];
                     byte[] receiveData = new byte[1024];
 
-                    sendData = (lastName + "," + emailAddress + ",").getBytes();
+                    sendData = content.getBytes();
 
                     DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, otherBankPort);
                     clientSocket.send(sendPacket);
@@ -198,14 +235,12 @@ public class BankServant extends ClientPOA{
                     String reply = new String(receivePacket.getData());
                     clientSocket.close();
 
-                    String[] reply_array = reply.split(",");
-                    if(reply_array[0].equals("Exceed")){
-                        isExceedLimit = true; 
-                    }
+                    String[] reply_array = reply.split(":");
+                    result = reply_array[0];
 
                 }catch(Exception e){
                     System.out.println("**********************");
-                    System.out.println("getLoan");
+                    System.out.println("BankAsClient");
                     System.out.println("**********************");
                     System.out.println(e.toString());
                 }
@@ -217,10 +252,6 @@ public class BankServant extends ClientPOA{
         
         public void start(){
             new Thread(this).start();
-        }
-        
-        public void join(){
-            this.join();
         }
 
         @Override
@@ -239,23 +270,82 @@ public class BankServant extends ClientPOA{
                     InetAddress IPAddress = receivePacket.getAddress();
                     int port = receivePacket.getPort();
 
-                    String[] account_info = sentence.split(",");
-                    ArrayList<Account> list = account_HashMap.get(account_info[0].toLowerCase().substring(0, 1));
-                    Account foundAccount = null;
-                    
-                    for(Account account : list){
-                        if(account.emailAddress.equals(account_info[1])){
-                            foundAccount = account;
-                            break;
+                    String[] request_array = sentence.split(":");
+                    if(request_array[0].equals("search")){
+                        String[] content_array = request_array[1].split(",");
+                        ArrayList<Account> list = account_HashMap.get(content_array[0].toLowerCase().substring(0, 1));
+                        Account foundAccount = null;
+                        for(Account account : list){
+                            if(account.emailAddress.equals(content_array[1])){
+                                foundAccount = account;
+                                break;
+                            }
                         }
-                    }
-                    
-                    synchronized(foundAccount){
-                        // if its limit is not below 0
-                        if(foundAccount.creditLimit >= 0){
-                            sendData = "NotExceed,".getBytes();
+                        
+                        if(foundAccount == null){
+                            sendData = "NotExceed".getBytes();
                         }else{
-                            sendData = "Exceed,".getBytes();
+                            synchronized(foundAccount){
+                                // if its limit is not below 0
+                                if(foundAccount.creditLimit >= 0){
+                                    sendData = "NotExceed,".getBytes();
+                                }else{
+                                    sendData = "Exceed,".getBytes();
+                                }
+                            }
+                        }
+                        
+                    }else if(request_array[0].equals("transfer")){
+                        String[] content_array = request_array[1].split("#");
+                        String[] loan_info = content_array[0].split(",");
+                        Loan loan = new Loan();
+                        loan.ID = loan_info[0];
+                        loan.accountNumber = loan_info[1];
+                        loan.dueDate = Integer.parseInt(loan_info[2]);
+                        loan.amount = Integer.parseInt(loan_info[3]);
+                        
+                        String[] account_info = content_array[1].split(",");
+                        Account account = new Account();
+                        account.accountNumber = account_info[0];
+                        account.firstName = account_info[1];
+                        account.lastName = account_info[2];
+                        account.emailAddress = account_info[3];
+                        account.phoneNumber = account_info[4];
+                        account.password = account_info[5];
+                        account.creditLimit = Integer.valueOf(account_info[6]);
+                        
+                        loan_HashMap.put(loan.ID, loan);
+                        List<Account> list = account_HashMap.get(account.lastName.toLowerCase().substring(0, 1));
+                        list.add(account);
+                        
+                        if(loan_HashMap.get(loan.ID)!=null && list.contains(account)){
+                            sendData = "Yes".getBytes();
+                        }else{
+                            if(loan_HashMap.get(loan.ID)!=null){
+                                loan_HashMap.remove(loan.ID);
+                            }
+                            if(list.contains(account)){
+                                list.remove(account);
+                            }
+                            
+                            sendData = "No".getBytes();
+                        }
+                        
+                    }else if(request_array[0].equals("rollback")){
+                        String[] content_array = request_array[1].split("#");
+                        Account foundAccount = null;
+                        List<Account> account_list = account_HashMap.get(content_array[0].toLowerCase().substring(0, 1));
+                        for(Account account : account_list){
+                            if(account.accountNumber.equals(content_array[1])){
+                                foundAccount = account;
+                                break;
+                            }
+                        }
+                        if(foundAccount != null){
+                            account_list.remove(foundAccount);
+                        }
+                        if(loan_HashMap.get(content_array[2])!=null){
+                            loan_HashMap.remove(content_array[2]);
                         }
                     }
 
@@ -264,7 +354,9 @@ public class BankServant extends ClientPOA{
                 }
             
             }catch(Exception e){
-                System.out.println("Server "+" has problem!!!!");
+                System.out.println("**********************");
+                System.out.println("BankAsReceiver");
+                System.out.println("**********************");
                 System.out.println(e.toString());
             }
         }
