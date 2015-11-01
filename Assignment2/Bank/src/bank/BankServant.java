@@ -3,10 +3,18 @@ package bank;
 import BankApp.Account;
 import BankApp.ClientPOA;
 import BankApp.Loan;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import org.omg.CORBA.ORB;
@@ -63,8 +71,8 @@ public class BankServant extends ClientPOA{
             account = new Account(""+uniqueAccountID_Base, firstName, lastName, emailAddress, phoneNumber, password, DEFAULT_CREDIT);
             list.add(account);
             
-            //log(firstName + lastName + " " + " create account : " + account.accountNumber);
-            //logCustomer(account.getCustomerAccountNumber(), "account created");
+            log(firstName + lastName + " " + " create account : " + account.accountNumber);
+            logCustomer(account.accountNumber, "account created");
             return account.accountNumber + " has been created for user " + firstName + " " + lastName;
         }else{
             return "Acount is already existed!";
@@ -119,6 +127,8 @@ public class BankServant extends ClientPOA{
         if(loan == null){
             return "Not able to create your loan request";
         }else{
+            logCustomer(accountNumber, "GetLoan performed \n" );
+            log("Account " + accountNumber + " tried to get loan, and the result shows ");
             return loan.ID + " has been created";
         }
     }
@@ -187,13 +197,49 @@ public class BankServant extends ClientPOA{
 
     @Override
     public String delayPayment(String bank, String loanID, int currentDueDate, int newDueDate) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        Loan loan = loan_HashMap.get(loanID);
+        
+        if(loan == null){
+            return "Not found loan by ID: " + loanID;
+        }
+        
+        synchronized(loan){
+            loan.dueDate = newDueDate;
+        }
+        
+        log("Loan " + loanID + " has been delayed from " + currentDueDate + " to " + newDueDate);
+        logManager("Loan " + loanID + " has been delayed from " + currentDueDate + " to " + newDueDate);
+        
+        return "Successfully delay payment for loan : " + loanID;
     }
 
     @Override
     public String printCustomerInfo(String bank) {
+        StringBuilder result = new StringBuilder();
+        result.append("CustomerAccount Info:"+"\n");
+        result.append("ID FIrstName LastName Email Phone Credit"+"\n");
+        for(String ch : alphabet){
+            ArrayList<Account> list = account_HashMap.get(ch);
+            for(Account account : list){
+                result.append(account.accountNumber + " "
+                                + account.firstName + " " + account.lastName + " "
+                                + account.emailAddress + " " + account.phoneNumber
+                                + " " + account.creditLimit + "\n");
+            }
+            
+        }
         
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        result.append("Loan Info:"+"\n");
+        result.append("ID CustomerID DueDate LoanAmount"+"\n");
+        for(Loan loan : loan_HashMap.values()){
+            result.append(loan.ID + " " + loan.accountNumber
+                            + " " + loan.dueDate + " days left" + " " + loan.amount + "\n");
+        }
+        
+        log("printCustomerInfo has been called");
+        logManager("printCustomerInfo has been called");
+        
+        return result.toString();
     }
     
     
@@ -364,4 +410,55 @@ public class BankServant extends ClientPOA{
     
     }
 
+    private void log(String content){
+        
+        File dir = new File(port+""); 
+        dir.mkdir();
+        
+        String path = "./"+ port +"/log.txt";
+        
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        
+        try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path, true)))) {
+            out.println(dateFormat.format(date) + "    " + content);
+            
+        }catch (IOException e) {
+            
+        }
+    }
+    
+    private void logCustomer(String id, String content){
+        File dir = new File(port+""); 
+        dir.mkdir();
+        
+        String path = "./" + port + "/Customer"+ id +".txt";
+        
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        
+        try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path, true)))) {
+            out.println(dateFormat.format(date) + "    " + content);
+            
+        }catch (IOException e) {
+            
+        }
+    }
+    
+    private void logManager(String content){
+        File dir = new File(port+""); 
+        dir.mkdir();
+        
+        String path = "./"+port+"/Manager.txt";
+        
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        
+        try(PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path, true)))) {
+            out.println(dateFormat.format(date) + "    " + content);
+            
+        }catch (IOException e) {
+            
+        }
+    }
 }

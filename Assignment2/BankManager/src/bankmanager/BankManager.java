@@ -1,6 +1,5 @@
-package bankclient;
+package bankmanager;
 
-import BankApp.Account;
 import BankApp.Client;
 import BankApp.ClientHelper;
 import java.io.BufferedReader;
@@ -9,25 +8,23 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import org.omg.CORBA.ORB;
-import org.omg.CosNaming.NamingContextExt;
-import org.omg.CosNaming.NamingContextExtHelper;
 
 /**
  *
  * @author yucunli
  */
-public class BankClient {
+public class BankManager {
     
     ORB orb;
     
-    public BankClient(String[] args){
+    public BankManager(String[] args){
         orb = ORB.init(args, null);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException{
         
-        BankClient client = new BankClient(args);
-        System.out.println("Welcome to our bank system customer client!");
+        BankManager client = new BankManager(args);
+        System.out.println("Welcome to our bank system manager client!");
         boolean login = true;
         while(login){
             client.console();
@@ -65,31 +62,27 @@ public class BankClient {
             org.omg.CORBA.Object obj = orb.string_to_object(IOR); 
             Client client = ClientHelper.narrow(obj);
             
-            if(request.equals("openAccount")){
-                System.out.println(client.openAccount("", infoArray[0], infoArray[1], infoArray[2], infoArray[3], infoArray[4]));
-            }else if(request.equals("getLoan")){
-                System.out.println(client.getLoan("", infoArray[0], infoArray[1], Integer.valueOf(infoArray[2])));
-            }else if(request.equals("transferLoan")){
-                System.out.println(client.transferLoan(infoArray[0], "", infoArray[1]));
+            if(request.equals("delayPayment")){
+                System.out.println(client.delayPayment("", infoArray[0], -1, Integer.valueOf(infoArray[1])));
+            }else if(request.equals("printCustomerInfo")){
+                System.out.println(client.printCustomerInfo(""));
             }
             
         }catch(Exception ex){
-            System.out.println(ex.toString());
-        }
         
+        }
     }
     
     public void console(){
-        System.out.println("Here are two available operation you can do on our system:");
-        System.out.println("1. Open Account");
-        System.out.println("2. Get Loan");
-        System.out.println("3. Transfer Loan");
-        
         try{
-	    BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
-	    String choice = bufferRead.readLine();
+            System.out.println("Here are two available operation you can do on our system:");
+            System.out.println("1. Delay Payment");
+            System.out.println("2. Print Customer Info");
             
-            if(!(choice.equals("1") || choice.equals("2") || choice.equals("3"))){
+            BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
+            String choice = bufferRead.readLine();
+            
+            if(!(choice.equals("1") || choice.equals("2"))){
                 System.out.println("Illegal Input, please choice 1 or 2 or 3");
                 return;
             }
@@ -112,44 +105,26 @@ public class BankClient {
                 System.out.println("Illegal Input, please choice 1 or 2 or 3");
                 return;
             }
-	      
+            
             if(choice.equals("1")){
-                
-                System.out.println("Please enter your information(FirstName, LastName, Email, Phone, Password)");
+                System.out.println("Please enter your information(Loan ID, New Due Date)");
                 bufferRead = new BufferedReader(new InputStreamReader(System.in));
                 String info = bufferRead.readLine();
                 String[] infoArray = info.split(",");
                 
-                sendRequest(bank_port, "openAccount", infoArray);
-                
+                sendRequest(bank_port, "delayPayment", infoArray);
             }else if(choice.equals("2")){
+                String[] infoArray = {};
                 
-                System.out.println("Please enter your information(AccountNumber, Password, LoanAmount)");
-                bufferRead = new BufferedReader(new InputStreamReader(System.in));
-                String info = bufferRead.readLine();
-                String[] infoArray = info.split(",");
-                
-                sendRequest(bank_port, "getLoan", infoArray);
-                
-            }else if(choice.equals("3")){
-                System.out.println("Please enter your information(loan ID, target bank)");
-                bufferRead = new BufferedReader(new InputStreamReader(System.in));
-                String info = bufferRead.readLine();
-                String[] infoArray = info.split(",");
-                
-                sendRequest(bank_port, "transferLoan", infoArray);
-                
+                sendRequest(bank_port, "printCustomerInfo", infoArray);
             }else{
-                System.out.println("Illegal Input, please choice 1 or 2 or 3");
+                System.out.println("Illegal Input, please choice 1 or 2");
             }
-	}
-	catch(IOException e)
-	{
-            System.out.println(e.toString());
-	}
-        catch(Exception e){
-            System.out.println(e.toString());
+            
+        }catch(Exception ex){
+            System.out.println(ex.toString());
         }
+        
     }
     
 }
